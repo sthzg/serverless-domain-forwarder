@@ -1,0 +1,27 @@
+{
+  "plugins": [
+    "mocha"
+  ],
+  "env": {
+    "mocha": true
+  },
+  "globals": {
+    "expect": false,
+    "sinon": false
+  },
+  "extends": "airbnb-base",
+  "overrides": [
+    {
+      "files": [
+        "wallaby.js",
+        "**/*.spec.js"
+      ],
+      "rules": {
+        "func-names": "off",
+        "prefer-arrow-callback": "off",
+        "no-unused-expressions": "off",
+        "global-require": "off"
+      }
+    }
+  ]
+}

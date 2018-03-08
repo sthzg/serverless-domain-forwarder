@@ -1,0 +1,78 @@
+service: serverless-domain-forwarder
+
+plugins:
+  - serverless-plugin-scripts
+
+provider:
+  name: aws
+  runtime: nodejs6.10
+  region: eu-central-1
+  memorySize: 128
+  versionFunctions: false
+
+custom: 
+  conf: ${file(./config.js)}
+  scripts:
+    hooks:
+      'before:deploy:deploy': npm run test
+
+functions:
+  forward:
+    handler: src/handlers.forward
+    name: ${self:custom.conf.namePrefix}-lambda
+    description: Forwards requests to the configured target domain.
+    events:
+      - http:
+          path: /
+          method: get
+      - http:
+          path: /{any+}
+          method: get
+
+resources:
+  Resources:
+    CloudFrontDistribution:
+      Type: AWS::CloudFront::Distribution
+      Properties:
+        DistributionConfig:
+          Origins:
+            - DomainName:
+                Fn::Join:
+                  - ""
+                  - - Ref: ApiGatewayRestApi
+                    - ".execute-api."
+                    - Ref: AWS::Region
+                    - ".amazonaws.com"
+              Id: ${self:custom.conf.namePrefix}-lambda
+              CustomOriginConfig:
+                HTTPPort: 80
+                HTTPSPort: 443
+                OriginProtocolPolicy: https-only
+              OriginPath: /${self:provider.stage}
+          Enabled: true
+          DefaultCacheBehavior:
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+            TargetOriginId: ${self:custom.conf.namePrefix}-lambda
+            ForwardedValues:
+              QueryString: "false"
+              Cookies:
+                Forward: all
+            ViewerProtocolPolicy: redirect-to-https
+          Aliases: ${self:custom.conf.domains}
+          ViewerCertificate:
+            CloudFrontDefaultCertificate: "true"
+            ## To configure an AWS Certificate, remove the CloudFrontDefaultCertificate line above,
+            ## uncomment the next lines and set the arn respectively.
+            #
+            # AcmCertificateArn: <arn:your-cert-arn>
+            # SslSupportMethod: sni-only
+            #
+          Comment: ${self:custom.conf.namePrefix}
+
+  Outputs:
+    CloudFrontDistributionOutput:
+      Value:
+        'Fn::GetAtt': [ CloudFrontDistribution, DomainName ]
