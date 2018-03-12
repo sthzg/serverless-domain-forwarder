@@ -11,11 +11,11 @@ function getLocation(config) {
 }
 
 function buildResponse(config) {
-  const Location = getLocation(config);
-
   return {
     statusCode: MOVED_PERMANENTLY,
-    headers: { Location },
+    headers: {
+      Location: getLocation(config),
+    },
   };
 }
 

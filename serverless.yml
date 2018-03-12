@@ -45,7 +45,6 @@ resources:
                     - ".amazonaws.com"
               Id: ${self:custom.conf.namePrefix}-lambda
               CustomOriginConfig:
-                HTTPPort: 80
                 HTTPSPort: 443
                 OriginProtocolPolicy: https-only
               OriginPath: /${self:provider.stage}
@@ -60,7 +59,7 @@ resources:
               QueryString: "false"
               Cookies:
                 Forward: all
-            ViewerProtocolPolicy: redirect-to-https
+            ViewerProtocolPolicy: allow-all
           Aliases: ${self:custom.conf.domains}
           ViewerCertificate:
             CloudFrontDefaultCertificate: "true"
